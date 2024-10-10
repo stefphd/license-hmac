@@ -207,8 +207,19 @@ char *find_lic_file(const char *filename, char **search_envs, int env_len) {
         int dir_count;
         char **dirs = split_string(env_val, delimiter, &dir_count);
         for (int j = 0; j < dir_count; j++) {
+            // try using dirs[j] as filename
+            char full_file[HMACLIC_MAXPATH];
+            sprintf(full_file, "%s", dirs[j]);
+            if (!file_exists(full_file)) {
+                for (int k = 0; k < dir_count; k++) {
+                    free(dirs[k]);
+                }
+                free(dirs);
+                return strdup(full_file);
+            }
+            // try looking for filename in dirs[j]
             char full_path[HMACLIC_MAXPATH];
-            snprintf(full_path, sizeof(full_path), "%s/%s", dirs[j], filename);
+            sprintf(full_path, "%s/%s", dirs[j], filename);
             if (!file_exists(full_path)) {
                 for (int k = 0; k < dir_count; k++) {
                     free(dirs[k]);

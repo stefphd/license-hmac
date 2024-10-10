@@ -15,13 +15,11 @@
 #pragma comment(lib, "iphlpapi.lib")
 #else
 #include <unistd.h>
-#include <limits.h>
 #include <ifaddrs.h>
-#include <netinet/in.h>
+#include <linux/if.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <net/if.h>
-#include <arpa/inet.h>
+#include <linux/if_ether.h> 
 #endif
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
@@ -104,28 +102,44 @@ char *get_mac() {
     return mac_addr;
 #else
     struct ifaddrs *ifaddr, *ifa;
-    char *mac_addr = NULL;
+    char* mac_addr = NULL;
+    int sockfd;
 
     if (getifaddrs(&ifaddr) == -1) {
         perror("getifaddrs");
-        return NULL;
+        exit(EXIT_FAILURE);
+    }
+
+    // Create a socket to use with ioctl
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        perror("socket");
+        freeifaddrs(ifaddr);
+        exit(EXIT_FAILURE);
     }
 
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == NULL)
-            continue;
-
-        if (ifa->ifa_addr->sa_family == AF_PACKET && ifa->ifa_data != NULL) {
-            struct sockaddr_ll *s = (struct sockaddr_ll *)ifa->ifa_addr;
-            mac_addr = malloc(18);
-            sprintf(mac_addr, "%02X:%02X:%02X:%02X:%02X:%02X",
-                (s->sll_addr[0]), (s->sll_addr[1]),
-                (s->sll_addr[2]), (s->sll_addr[3]),
-                (s->sll_addr[4]), (s->sll_addr[5]));
-            break; // Exit the loop after finding the MAC address
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET) {
+            continue; // Only interested in AF_INET for retrieving MAC addresses
         }
+        struct ifreq ifr;
+        strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ-1);
+        if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) == -1) {
+            perror("ioctl");
+            continue;
+        }
+        unsigned char *mac = (unsigned char *)ifr.ifr_hwaddr.sa_data;
+        // skip 00:00:00:00:00:00
+        if (mac[0] == 0 || mac[1] == 0 || mac[2] == 0 || mac[3] == 0 || mac[4] == 0 || mac[5] == 0) {
+            continue;
+        }
+        // format first valid and exit
+        mac_addr = malloc(18);
+        sprintf(mac_addr, "%02X:%02X:%02X:%02X:%02X:%02X", 
+            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        break;
     }
-
+    close(sockfd);
     freeifaddrs(ifaddr);
     return mac_addr;
 #endif

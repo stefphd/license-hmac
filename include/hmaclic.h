@@ -49,6 +49,11 @@
 #ifndef _HMACLIC_H
 #define _HMACLIC_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef HMACLIC_EXPORT_API
     #ifdef _WIN32  // For Windows
         #ifdef BUILD_HMACLIC
@@ -171,5 +176,10 @@ HMACLIC_EXPORT_API int write_mac_to_file(const char *filename, const char *hostn
  * @return 0 for success.
  */
 HMACLIC_EXPORT_API int read_mac_from_file(const char *filename, char **hostname, char **mac);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

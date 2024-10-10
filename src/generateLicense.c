@@ -5,6 +5,7 @@
 
 #include "hmaclic.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 #define DEF_PRIVATE_KEY "0000000000000000"
 #define DEF_LICFILE_PREFIX "license"

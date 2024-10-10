@@ -12,12 +12,13 @@
 
 int main(int argc, char* argv[]) {
     // Get command line arguments
-    char* hostname, *mac;
+    char* hostname, *mac, *exp_date;
     char* private_key = DEF_PRIVATE_KEY;
     char* licfile_prefix = DEF_LICFILE_PREFIX;
-    if (argc < 2) {
-        printf("Usage:  %s <machine_ID-file>\n", argv[0]);
-        printf("        %s <machine_ID-file> <private-key> <licfile-prefix>\n", argv[0]);
+    if (argc < 3) {
+        printf("Usage:  %s <machine_ID-file> <YYYY-MM-DD>\n", argv[0]);
+        printf("        %s <machine_ID-file> <YYYY-MM-DD> <private-key>\n", argv[0]);
+        printf("        %s <machine_ID-file> <YYYY-MM-DD> <private-key> <licfile-prefix>\n", argv[0]);
         // wait
         printf("Press Enter to continue...");
         getchar();
@@ -44,11 +45,12 @@ int main(int argc, char* argv[]) {
         getchar();
         return 1;
     }
-    if (argc > 2) {
-        private_key = argv[2];
-    }
+    exp_date = argv[2];
     if (argc > 3) {
-        licfile_prefix = argv[3];
+        private_key = argv[3];
+    }
+    if (argc > 4) {
+        licfile_prefix = argv[4];
     }
 
     // License filename
@@ -57,12 +59,13 @@ int main(int argc, char* argv[]) {
 
     // Generate the license key
     printf("Generating license key...\n");
-    char * license_key = generate_hmac(mac, private_key);
+    char * license_key = generate_hmac(mac, exp_date, private_key);
     printf("Private key: %s\n", private_key);
     printf("License key: %s\n", license_key);
+    printf("Exp. date  : %s\n", exp_date);
 
     // Save the license key to a file
-    if (write_lic_key(lic_filename, license_key)) {
+    if (write_lic_key(lic_filename, license_key, exp_date)) {
         // Print error message
         fprintf(stderr, "Unable to write license key to %s\n", lic_filename);
         // free mem

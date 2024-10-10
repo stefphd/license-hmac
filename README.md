@@ -1,6 +1,6 @@
 # H-MAC License
 
-A C library for license management using MAC address with 256-bit hash.
+A C library for license management using MAC address and expiration date with 256-bit hash.
 
 Tested on Windows 10.
 

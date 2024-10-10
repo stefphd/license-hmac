@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <iphlpapi.h>
@@ -52,6 +53,33 @@ char **split_string(const char *str, char delimiter, int *count) {
     free(temp);
     *count = tokens_size;
     return tokens;
+}
+
+// Helper function to parse "YYYY-MM-DD" into a struct tm
+int parse_date(const char *date_str, struct tm *tm_date) {
+    if (sscanf(date_str, "%d-%d-%d", &tm_date->tm_year, &tm_date->tm_mon, &tm_date->tm_mday) != 3) {
+        return 1;  // Invalid date format
+    }
+    tm_date->tm_year -= 1900;  // tm_year is years since 1900
+    tm_date->tm_mon -= 1;      // tm_mon is 0-based (0 = January)
+    tm_date->tm_hour = 0;
+    tm_date->tm_min = 0;
+    tm_date->tm_sec = 0;
+    tm_date->tm_isdst = -1;    // Daylight saving time information is not used
+
+    return 0;
+}
+
+// Function to check if the license is expired
+int is_expired(const char *exp_date) {
+    struct tm exp_date_tm = {0};
+    if (parse_date(exp_date, &exp_date_tm) != 0) {
+        return 1;  // Invalid expiration date
+    }
+    time_t exp_time = mktime(&exp_date_tm);
+    time_t now = time(NULL);
+    // Compare expiration date with current date
+    return difftime(exp_time, now) < 0; // Return 1 if expired, 0 otherwise
 }
 
 // Get the MAC address
@@ -104,13 +132,16 @@ char *get_mac() {
 }
 
 // Generate HMAC-SHA256
-char *generate_hmac(const char *mac, const char *key) {
+char *generate_hmac(const char *mac, const char*exp_date, const char *key) {
     unsigned char result[32]; // SHA256 outputs 256 bits (32 bytes)
     unsigned int len = 32;
-
+    char data[256];
+    // Combine MAC and exp date as <mac>|<exp-date>
+    sprintf(data, "%s|%s", mac, exp_date);
+    
     HMAC_CTX *ctx = HMAC_CTX_new();
     HMAC_Init_ex(ctx, key, strlen(key), EVP_sha256(), NULL);
-    HMAC_Update(ctx, (unsigned char *)mac, strlen(mac));
+    HMAC_Update(ctx, (unsigned char *)data, strlen(data));
     HMAC_Final(ctx, result, &len);
     HMAC_CTX_free(ctx);
 
@@ -140,11 +171,19 @@ char *get_hostname() {
 }
 
 // Validate license
-int validate_lic(const char *mac, const char *key, const char *license) {
-    char *lic_key = generate_hmac(mac, key);
+int validate_lic(const char *mac, const char *exp_date, const char *key, const char *license) {
+    // Check if the license is expired
+    if (is_expired(exp_date)) {
+        return EXIT_EXPIRED;
+    }
+    // Validate HMAC
+    char *lic_key = generate_hmac(mac, exp_date, key);
     int result = strcmp(lic_key, license);
     free(lic_key);
-    return result;
+    if (result) {
+        return EXIT_UNVALID;
+    }
+    return EXIT_VALID;
 }
 
 // Find license file
@@ -187,26 +226,38 @@ char *find_lic_file(const char *filename, char **search_envs, int env_len) {
 }
 
 // Read license key from file
-char *read_lic_key(const char *filename) {
+int read_lic_key(const char *filename, char **key, char **exp_date) {
     FILE *inFile = fopen(filename, "r");
     if (!inFile) {
-        return NULL;
+        return 1;
     }
-    char *lic_key = malloc(HMACLIC_MAXPATH);
-    if (fgets(lic_key, HMACLIC_MAXPATH, inFile) == NULL) {
-        free(lic_key);
+    *key = malloc(HMACLIC_MAXPATH);
+    *exp_date = malloc(11); // Format YYYY-MM-DD
+    if (fgets(*key, HMACLIC_MAXPATH, inFile) == NULL || fgets(*exp_date, 11, inFile) == NULL) {
+        free(*key);
+        free(*exp_date);
         fclose(inFile);
-        return NULL;
+        return 1;
     }
     fclose(inFile);
-    return lic_key;
+    // Remove newline characters from the key and expiration date
+    size_t len = strlen(*key);
+    if (len > 0 && (*key)[len - 1] == '\n') {
+        (*key)[len - 1] = '\0';
+    }
+    len = strlen(*exp_date);
+    if (len > 0 && (*exp_date)[len - 1] == '\n') {
+        (*exp_date)[len - 1] = '\0';
+    }
+    return 0;
 }
 
 // Write license key to file
-int write_lic_key(const char *filename, const char *key) {
+int write_lic_key(const char *filename, const char *key, const char *exp_date) {
     FILE* outFile = fopen(filename, "w");
     if (outFile != NULL) {
-        fprintf(outFile, "%s", key);
+        fprintf(outFile, "%s\n", key);
+        fprintf(outFile, "%s", exp_date);
         fclose(outFile);
         return 0;
     }

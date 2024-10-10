@@ -1,8 +1,8 @@
 /** 
  * @file hmaclic.h
- * @brief Licensening using MAC address.
+ * @brief Licensening using MAC address and expiration date.
  * 
- * Licensening using MAC address. 
+ * Licensening using MAC address and expiration date. 
  * Typical usage is (without some checks of exit value):
  *
  * - Get the machine ID file:
@@ -18,11 +18,13 @@
  * - Generate the license file from the machine ID file:
  * ```c
  * // Generate license key
+ * const char *mac = "01:23:45:67:89:XY"
+ * const char* exp_date = "2024-12-31"
  * const char* private_key = "my-super-segret-private-key-0123456789";
- * char * license_key = generate_hmac(mac, PRIVATE_KEY);
+ * char * license_key = generate_hmac(mac, exp_date, private_key);
  * // Write to file
  * const char* filename = "license.lic";
- * write_lic_key(filename, license_key);
+ * write_lic_key(filename, license_key, exp_date);
  * ```
  * 
  * - Validate the license file:
@@ -37,10 +39,11 @@
  *                        "PATH"};
  * char* filename_full = find_lic_file(filename, search_envs, 3);
  * // Get license key from file
- * char* license_key = read_lic_key(filename_full);
+ * char* license_key, *exp_date
+ * read_lic_key(filename_full, &license_key, &exp_date);
  * // Validate license key
  * const char* private_key = "my-super-segret-private-key-0123456789";
- * int exit = validate_lic(mac, private_key, license_key);
+ * int exit = validate_lic(mac, exp_date, private_key, license_key);
  * ```
  *
  * Copyright (C) 2024 Stefano Lovato
@@ -48,7 +51,6 @@
 
 #ifndef _HMACLIC_H
 #define _HMACLIC_H
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +80,24 @@ extern "C" {
  * Maximum path length for C string.
  */
 #define HMACLIC_MAXPATH 512 
+/**
+ * @brief Exit for valid license.
+ * 
+ * Exit value for valid license.
+ */
+#define EXIT_VALID      0
+/**
+ * @brief Exit for expired license.
+ * 
+ * Exit value for expired license.
+ */
+#define EXIT_EXPIRED    1
+/**
+ * @brief Exit for unvalid license.
+ * 
+ * Exit value for unvalid license.
+ */
+#define EXIT_UNVALID    2
 
 /**
  * @brief Get hostname.
@@ -100,25 +120,27 @@ HMACLIC_EXPORT_API char* get_mac();
 /**
  * @brief Generate license key.
  * 
- * Generate the license key from MAC address and private key.
+ * Generate the license key from MAC address, expiration date and private key.
  * 
  * @param mac The MAC address.
+ * @param exp_date The expiration date.
  * @param key The private key.
  * @return The license key (64 chars).
  */
-HMACLIC_EXPORT_API char *generate_hmac(const char *mac, const char *key);
+HMACLIC_EXPORT_API char *generate_hmac(const char *mac, const char *exp_date, const char *key);
 
 /**
  * @brief Validate licence.
  * 
- * Validate the license for the given MAC address, private key, and license key.
+ * Validate the license for the given MAC address, expiration date, private key, and license key.
  * 
  * @param mac The MAC address.
+ * @param exp_date The expiration date.
  * @param key The private key.
  * @param license The license key (64 chars).
- * @return 0 for success.
+ * @return EXIT_VALID for success, EXIT_EXPIRED for expired license, EXIT_UNVALID for unvalid license.
  */
-HMACLIC_EXPORT_API int validate_lic(const char *mac, const char *key, const char *license);
+HMACLIC_EXPORT_API int validate_lic(const char *mac, const char *exp_date, const char *key, const char *license);
 
 /**
  * @brief Find license file.
@@ -133,30 +155,33 @@ HMACLIC_EXPORT_API int validate_lic(const char *mac, const char *key, const char
 HMACLIC_EXPORT_API char *find_lic_file(const char *filename, char **search_envs, int env_len);
 
 /**
- * @brief Read license key.
+ * @brief Read license file.
  * 
- * Read the license key from the license file.
+ * Read the license key and expiration date from the license file.
  * 
  * @param filename The fullpath to the license file.
- * @return The license key; NULL if failed.
+ * @param key The license key.
+ * @param exp_date The expiration date.
+ * @return 0 for success.
  */
-HMACLIC_EXPORT_API char *read_lic_key(const char *filename);
+HMACLIC_EXPORT_API int read_lic_key(const char *filename, char **key, char **exp_date);
 
 /**
- * @brief Write license key.
+ * @brief Write license file.
  * 
- * Write the license key to the license file.
+ * Write the license key and expiration date to the license file.
  * 
  * @param filename The file to write.
  * @param key The license key.
+ * @param exp_date The expiration date.
  * @return 0 for success.
  */
-HMACLIC_EXPORT_API int write_lic_key(const char *filename, const char *key);
+HMACLIC_EXPORT_API int write_lic_key(const char *filename, const char *key, const char *exp_date);
 
 /**
- * @brief Write hostname and MAC address.
+ * @brief Write machine ID file.
  * 
- * Write the hostname and the MAC address to a file.
+ * Write the hostname and the MAC address to the machine ID file.
  * 
  * @param filename The file to write.
  * @param hostname The hostname.

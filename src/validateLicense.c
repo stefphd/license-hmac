@@ -44,37 +44,38 @@ int main(int argc, char* argv[]) {
     }
 
     // get license key from file
-    char* license_key = read_lic_key(lic_filename_full);
-    if (!license_key) {
-        fprintf(stderr, "Failed to retrieve license key from file: %s", lic_filename_full);
+    char* license_key, *exp_date;
+    if (read_lic_key(lic_filename_full, &license_key, &exp_date)) {
+        fprintf(stderr, "Failed to retrieve license from file: %s", lic_filename_full);
         return 1;
     }
 
     // print
     printf("Private key: %s\n", private_key);
     printf("License key: %s\n", license_key);
+    printf("Exp. date  : %s\n", exp_date);
 
     // validate license key
-    if (validate_lic(mac, private_key, license_key)) {
-        fprintf(stderr, "Unvalid license\n");
-        // free mem
-        free(hostname); free(mac);
-        free(lic_filename_full);
-        free(license_key);
-        // wait
-        printf("Press Enter to continue...");
-        getchar();
-        return 1;
+    int exit = validate_lic(mac, exp_date, private_key, license_key);
+    switch (exit) {
+        case EXIT_VALID:
+            printf("Valid license\n");
+            break;
+        case EXIT_EXPIRED:
+            fprintf(stderr, "Expired license\n");
+            break;
+        case EXIT_UNVALID:
+            fprintf(stderr, "Unvalid license\n");
+            break;
     }
-    printf("Valid license\n");
 
     // free mem
     free(hostname); free(mac);
     free(lic_filename_full);
-    free(license_key);
+    free(license_key); free(exp_date);
 
     // wait
     printf("Press Enter to continue...");
     getchar();
-    return 0;
+    return exit;
 }

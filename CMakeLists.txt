@@ -8,9 +8,6 @@ project(hmaclic
         DESCRIPTION "A C library for licensing using MAC address"
         )
 
-# Options
-set(LIC_PRIVATE_KEY "\"a-very-long-private-key-that-should-remain-unknown-to-the-enduser-012345689-!@#?^\"" CACHE STRING "Private key of license generation/validation")
-
 # Doxygen
 find_package(Doxygen)
 
@@ -35,12 +32,10 @@ target_link_libraries(getMachineID PRIVATE hmaclic)
 # Generate license exe
 add_executable(generateLicense src/generateLicense.c)
 target_link_libraries(generateLicense PRIVATE hmaclic)
-target_compile_definitions(generateLicense PRIVATE PRIVATE_KEY=${LIC_PRIVATE_KEY})
 
 # Validate license lib
 add_executable(validateLicense src/validateLicense.c)
 target_link_libraries(validateLicense PRIVATE hmaclic)
-target_compile_definitions(validateLicense PRIVATE PRIVATE_KEY=${LIC_PRIVATE_KEY})
 
 # Docs
 if(DOXYGEN_FOUND)

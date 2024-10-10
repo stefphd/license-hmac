@@ -6,18 +6,25 @@
 #include "hmaclic.h"
 #include <stdio.h>
 
-#ifndef PRIVATE_KEY
-#define PRIVATE_KEY "0000000000000000"
-#endif
+#define DEF_PRIVATE_KEY "0000000000000000"
+#define DEF_LICFILE_PREFIX "license"
 
-int main() {
+int main(int argc, char* argv[]) {
     // get machine current hostname and MAC
     char* hostname = get_hostname();
     char* mac = get_mac();
-
+    char* private_key = DEF_PRIVATE_KEY;
+    char* licfile_prefix = DEF_LICFILE_PREFIX;
+    // get command line arguments
+    if (argc > 1) {
+        private_key = argv[1];
+    }
+    if (argc > 2) {
+        licfile_prefix = argv[2];
+    }
     // look for license-<hostname>.lic in current directory + specified environment variable
     char lic_filename[HMACLIC_MAXPATH];
-    sprintf(lic_filename, "license-%s.lic", hostname);
+    sprintf(lic_filename, "%s-%s.lic", licfile_prefix, hostname);
     char* search_envs[] = { "USERPROFILE",
                             "HOME",
                             "PATH"
@@ -37,15 +44,23 @@ int main() {
     }
 
     // get license key from file
-    char* lic_key = read_lic_key(lic_filename_full);
+    char* license_key = read_lic_key(lic_filename_full);
+    if (!license_key) {
+        fprintf(stderr, "Failed to retrieve license key from file: %s", lic_filename_full);
+        return 1;
+    }
+
+    // print
+    printf("Private key: %s\n", private_key);
+    printf("License key: %s\n", license_key);
 
     // validate license key
-    if (validate_lic(mac, PRIVATE_KEY, lic_key)) {
+    if (validate_lic(mac, private_key, license_key)) {
         fprintf(stderr, "Unvalid license\n");
         // free mem
         free(hostname); free(mac);
         free(lic_filename_full);
-        free(lic_key);
+        free(license_key);
         // wait
         printf("Press Enter to continue...");
         getchar();
@@ -56,7 +71,7 @@ int main() {
     // free mem
     free(hostname); free(mac);
     free(lic_filename_full);
-    free(lic_key);
+    free(license_key);
 
     // wait
     printf("Press Enter to continue...");

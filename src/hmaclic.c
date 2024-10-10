@@ -4,6 +4,7 @@
 */
 
 #include "hmaclic.h"
+#include "sha256.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +22,6 @@
 #include <sys/socket.h>
 #include <linux/if_ether.h> 
 #endif
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
 
 // Function to check if a file exists
 int file_exists(const char *filename) {
@@ -146,24 +145,30 @@ char *get_mac() {
 }
 
 // Generate HMAC-SHA256
-char *generate_hmac(const char *mac, const char*exp_date, const char *key) {
-    unsigned char result[32]; // SHA256 outputs 256 bits (32 bytes)
-    unsigned int len = 32;
+char *generate_hmac(const char *mac, const char *exp_date, const char *key) {
     char data[256];
     // Combine MAC and exp date as <mac>|<exp-date>
     sprintf(data, "%s|%s", mac, exp_date);
-    
-    HMAC_CTX *ctx = HMAC_CTX_new();
-    HMAC_Init_ex(ctx, key, strlen(key), EVP_sha256(), NULL);
-    HMAC_Update(ctx, (unsigned char *)data, strlen(data));
-    HMAC_Final(ctx, result, &len);
-    HMAC_CTX_free(ctx);
 
-    char *hexstr = malloc(65);
-    for (int i = 0; i < len; i++) {
-        sprintf(hexstr + (i * 2), "%02x", result[i]);
+    unsigned char hmac[SHA256_BLOCK_SIZE];
+    hmac_sha256(key, data, hmac);
+
+    char *hexstr = malloc(SHA256_BLOCK_SIZE * 2 + 1);
+    for (size_t i = 0; i < SHA256_BLOCK_SIZE; i++) {
+        sprintf(hexstr + (i * 2), "%02x", data[i]);
     }
-    hexstr[64] = 0; // null-terminate the string
+    hexstr[SHA256_BLOCK_SIZE * 2] = '\0'; // Null-terminate
+
+    return hexstr;
+}
+
+// Hexadecimal conversion
+char *to_hex(const unsigned char *data, size_t len) {
+    char *hexstr = malloc(len * 2 + 1);
+    for (size_t i = 0; i < len; i++) {
+        sprintf(hexstr + (i * 2), "%02x", data[i]);
+    }
+    hexstr[len * 2] = '\0'; // Null-terminate
     return hexstr;
 }
 

@@ -11,17 +11,9 @@ project(hmaclic
 # Doxygen
 find_package(Doxygen)
 
-# OpenSSL lib
-find_package(OpenSSL REQUIRED)
-# Create interface library for OpenSSL
-add_library(openssl INTERFACE)
-target_include_directories(openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
-target_link_libraries(openssl INTERFACE ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
-
 # License hmaclic
-add_library(hmaclic SHARED src/hmaclic.c)
+add_library(hmaclic SHARED src/hmaclic.c src/sha256.c)
 target_include_directories(hmaclic PUBLIC include)
-target_link_libraries(hmaclic PRIVATE openssl)
 set_target_properties(hmaclic PROPERTIES PUBLIC_HEADER include/hmaclic.h)
 target_compile_definitions(hmaclic PRIVATE BUILD_HMACLIC)
 

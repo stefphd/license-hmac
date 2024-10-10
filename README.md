@@ -7,7 +7,6 @@ Tested on Windows 10.
 ## Requirements
 
 * A C compiler (such as MSVC or MinGW-w64 in Windows or g++ in Linux)
-* [OpenSSL](https://www.openssl.org/) library (pre-built binaries available for Windows)
 * [CMake](https://cmake.org/) build tool
 * (Optional) [Doxygen](https://www.doxygen.nl/) to generate the docuementation
 

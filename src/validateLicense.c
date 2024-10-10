@@ -28,6 +28,8 @@ int main() {
     }
     else {
         fprintf(stderr, "Unable to find license file: %s\n", lic_filename);
+        // free mem
+        free(hostname); free(mac);
         // wait
         printf("Press Enter to continue...");
         getchar();
@@ -40,12 +42,21 @@ int main() {
     // validate license key
     if (validate_lic(mac, PRIVATE_KEY, lic_key)) {
         fprintf(stderr, "Unvalid license\n");
+        // free mem
+        free(hostname); free(mac);
+        free(lic_filename_full);
+        free(lic_key);
         // wait
         printf("Press Enter to continue...");
         getchar();
         return 1;
     }
     printf("Valid license\n");
+
+    // free mem
+    free(hostname); free(mac);
+    free(lic_filename_full);
+    free(lic_key);
 
     // wait
     printf("Press Enter to continue...");

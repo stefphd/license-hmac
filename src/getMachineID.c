@@ -8,7 +8,7 @@
 
 int main() {
     // filename
-    const char* filename_prefix = "machine_ID-";
+    const char filename_prefix[] = "machine_ID-";
 
     // get machine hostname and MAC
     printf("Generating machine ID...\n");
@@ -26,7 +26,18 @@ int main() {
     }
     else {
         fprintf(stderr, "Unable to open file: %s\n", filename);
+        // free mem
+        free(hostname);
+        free(mac);
+        // wait
+        printf("Press Enter to continue...");
+        getchar();
+        return 1;
     }
+    
+    // free mem
+    free(hostname);
+    free(mac);
 
     // wait
     printf("Press Enter to continue...");

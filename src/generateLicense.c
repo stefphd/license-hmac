@@ -63,12 +63,21 @@ int main(int argc, char* argv[]) {
     if (write_lic_key(lic_filename, license_key)) {
         // Print error message
         fprintf(stderr, "Unable to write license key to %s\n", lic_filename);
+        // free mem
+        free(license_key);
         // wait
         printf("Press Enter to continue...");
         getchar();
         return 1;
     } else {
         printf("License key written to %s\n", lic_filename);  
+    }
+    
+    // free mem
+    free(license_key);
+    if (argc==2) {
+        free(mac);
+        free(hostname);
     }
 
     // wait

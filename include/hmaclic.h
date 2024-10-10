@@ -34,9 +34,9 @@
  * char* mac = get_mac();
  * // Find license file
  * const char* filename = "license.lic";
- * char* search_envs[] = {"USERPROFILE",
- *                        "HOME",
- *                        "PATH"};
+ * const char* search_envs[] = {"USERPROFILE",
+ *                              "HOME",
+ *                              "PATH"};
  * char* filename_full = find_lic_file(filename, search_envs, 3);
  * // Get license key from file
  * char* license_key, *exp_date
@@ -152,7 +152,7 @@ HMACLIC_EXPORT_API int validate_lic(const char *mac, const char *exp_date, const
  * @param env_len The number of environment variables.
  * @return The fullpath of the license file; NULL if not found.
  */
-HMACLIC_EXPORT_API char *find_lic_file(const char *filename, char **search_envs, int env_len);
+HMACLIC_EXPORT_API char *find_lic_file(const char *filename, const char **search_envs, int env_len);
 
 /**
  * @brief Read license file.

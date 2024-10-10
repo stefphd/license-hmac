@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     // look for license-<hostname>.lic in current directory + specified environment variable
     char lic_filename[HMACLIC_MAXPATH];
     sprintf(lic_filename, "%s-%s.lic", licfile_prefix, hostname);
-    char* search_envs[] = { "USERPROFILE",
+    const char* search_envs[] = { "USERPROFILE",
                             "HOME",
                             "PATH"
                             };

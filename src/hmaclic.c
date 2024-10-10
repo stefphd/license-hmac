@@ -206,7 +206,7 @@ int validate_lic(const char *mac, const char *exp_date, const char *key, const c
 }
 
 // Find license file
-char *find_lic_file(const char *filename, char **search_envs, int env_len) {
+char *find_lic_file(const char *filename, const char **search_envs, int env_len) {
     // Check current directory
     if (!file_exists(filename)) {
         return strdup(filename);

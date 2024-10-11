@@ -56,7 +56,7 @@
 extern "C" {
 #endif
 
-#define HMACLIC_EXPORT_API // static library
+@CMAKE_HMACLIC_EXPORT_API@
 
 /**
  * @brief Max path length

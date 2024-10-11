@@ -8,11 +8,41 @@ project(hmaclic
         DESCRIPTION "A C library for licensing using MAC address"
         )
 
+# Options
+option(BUILD_SHARED_LIBS "Build using shared library" OFF)
+
 # Doxygen
 find_package(Doxygen)
 
+# Configure header file depending on build type
+set(CMAKE_HMACLIC_EXPORT_API "#define HMACLIC_EXPORT_API // static library")
+if(BUILD_SHARED_LIBS)
+set(CMAKE_HMACLIC_EXPORT_API 
+"#ifndef HMACLIC_EXPORT_API
+    #ifdef _WIN32  // For Windows
+        #ifdef BUILD_HMACLIC
+            #define HMACLIC_EXPORT_API __declspec(dllexport)
+        #else
+            #define HMACLIC_EXPORT_API __declspec(dllimport)
+        #endif
+    #elif defined(__linux__) || defined(__APPLE__)  // For Linux and macOS
+        #ifdef BUILD_HMACLIC
+            #define HMACLIC_EXPORT_API __attribute__((visibility(\"default\")))
+        #else
+            #define HMACLIC_EXPORT_API
+        #endif
+    #else
+        #define HMACLIC_EXPORT_API // Fallback for other platforms
+    #endif
+#endif")
+endif()
+configure_file(${CMAKE_SOURCE_DIR}/include/hmaclic.in 
+    ${CMAKE_SOURCE_DIR}/include/hmaclic.h
+    @ONLY)
+
+
 # License hmaclic
-add_library(hmaclic SHARED src/hmaclic.c src/sha256.c)
+add_library(hmaclic src/hmaclic.c src/sha256.c)
 target_include_directories(hmaclic PUBLIC include)
 set_target_properties(hmaclic PROPERTIES PUBLIC_HEADER include/hmaclic.h)
 target_compile_definitions(hmaclic PRIVATE BUILD_HMACLIC)

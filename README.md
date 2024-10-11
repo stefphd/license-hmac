@@ -21,15 +21,19 @@ cmake ..
 cmake --build . [--config Release]
 ```
 
-Available targets are:
+Available options:
 
-- `hmaclic`: shared library with licensening tools
+* `BUILD_SHARED_LIBS`: set to `ON` to build using shared library
 
-- `getMachineID`: exectuble to generate the machine ID file
+Available targets:
 
-- `generateLicense`: exectuble to generate the license file
+* `hmaclic`: shared library with licensening tools
 
-- `validateLicense`: exectuable to validate the license file
+* `getMachineID`: exectuble to generate the machine ID file
+
+* `generateLicense`: exectuble to generate the license file
+
+* `validateLicense`: exectuable to validate the license file
 
 ## Documentation
 

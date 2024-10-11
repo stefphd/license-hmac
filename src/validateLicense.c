@@ -66,7 +66,9 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "Expired license\n");
             break;
         case EXIT_UNVALID:
-            fprintf(stderr, "Unvalid license\n");
+            char* validation_key = generate_hmac(mac, exp_date, private_key);
+            fprintf(stderr, "Unvalid license\nValidation key: %s\n", validation_key);
+            free(validation_key);
             break;
     }
 

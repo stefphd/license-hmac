@@ -146,11 +146,11 @@ char *get_mac() {
 
 // Generate HMAC-SHA256
 char *generate_hmac(const char *mac, const char *exp_date, const char *key) {
-    char data[256];
+    char data[256] = { '\0' };
     // Combine MAC and exp date as <mac>|<exp-date>
     sprintf(data, "%s|%s", mac, exp_date);
 
-    unsigned char hmac[SHA256_BLOCK_SIZE];
+    unsigned char hmac[SHA256_BLOCK_SIZE] = { '\0' };
     hmac_sha256(key, data, hmac);
 
     char *hexstr = malloc(SHA256_BLOCK_SIZE * 2 + 1);
